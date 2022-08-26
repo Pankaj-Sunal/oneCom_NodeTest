@@ -12,10 +12,6 @@ app.use(signupRoutes);
 
 app.use('/products',checkAuthentication,productRoutes);
 
-app.use((error, req, res, next) => {
-        res.status(500).send(error)
-  })
-
 app.use('*', (req, res) => {
     res.status(404).json({
       success: 'false',
@@ -30,16 +26,21 @@ app.use('*', (req, res) => {
 
   function checkAuthentication(req,res,next){
     jwt.verify(req.headers.token, 'secret', function(err, decoded) {
-        if(req.method == 'GET'){
+        if(err){
+            return res.status(401).json({statusCode:401,message:'User not authorized'}); 
+        }
+        if(req.method === 'GET'){
             next();
         }
-        if(decoded.data.role === 'ADMIN'){
+        else if(decoded.data.role === 'ADMIN'){
             next();
         }
-        if(req.method == 'DELETE' && decoded.data.role === 'SUPPORTER'){
+       else if(req.method === 'DELETE' && decoded.data.role === 'SUPPORTER'){
             next();
         }
-        return res.status(401).json({statusCode:401,message:'Not authorized to access endpoint'});
+        else{
+            return res.status(401).json({statusCode:401,message:'Not authorized to access endpoint'});
+        }
     });
   }
 
